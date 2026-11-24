@@ -50,10 +50,10 @@ final class LockScreenLyrics {
 
         // The buttons live in their own small window so everything else lets clicks through to the password field.
         let controls = self.controls ?? makeControls()
-        let size = CGSize(width: 220, height: 56)
+        let size = LockPlayerCard.size
         controls.setFrame(CGRect(
             x: screen.frame.midX - size.width / 2,
-            y: screen.frame.minY + screen.frame.height * LockScreenView.reservedFraction + 12,
+            y: screen.frame.minY + screen.frame.height * LockScreenView.reservedFraction + 8,
             width: size.width,
             height: size.height
         ), display: true)
@@ -74,7 +74,7 @@ final class LockScreenLyrics {
         panel.hasShadow = false
         panel.level = .screenSaver
         panel.collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary, .ignoresCycle]
-        let host = IslandHostingView(rootView: LockControls(nowPlaying: nowPlaying))
+        let host = IslandHostingView(rootView: LockPlayerCard(nowPlaying: nowPlaying))
         host.sizingOptions = []
         panel.contentView = host
         return panel
@@ -167,8 +167,8 @@ struct LockScreenView: View {
                         Spacer(minLength: 20)
                         nowPlayingCard(at: context.date, height: height)
                         Spacer(minLength: 20)
-                        // The playback buttons sit just above the password field and Touch ID prompt.
-                        Color.clear.frame(height: height * Self.reservedFraction + 76)
+                        // The player card window sits here, just above the password field and Touch ID prompt.
+                        Color.clear.frame(height: height * Self.reservedFraction + LockPlayerCard.size.height + 24)
                     }
                 }
             }
@@ -181,25 +181,18 @@ struct LockScreenView: View {
         let position = nowPlaying.position(at: date)
         let index = lyrics.currentIndex(at: position + 0.2)
         let lines = lyrics.lines
-        let artSize = min(height * 0.22, 240)
+        let artSize = min(height * 0.24, 280)
 
-        return VStack(spacing: 18) {
-            ArtworkView(image: nowPlaying.artwork, cornerRadius: artSize * 0.08)
+        return VStack(spacing: 22) {
+            ArtworkView(image: nowPlaying.artwork, cornerRadius: artSize * 0.07)
                 .frame(width: artSize, height: artSize)
-                .shadow(color: .black.opacity(0.45), radius: 30, y: 14)
-
-            if let track = nowPlaying.track {
-                VStack(spacing: 3) {
-                    Text(track.title)
-                        .font(.system(size: 17, weight: .semibold))
-                    Text(track.artist)
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.6))
-                }
-                .lineLimit(1)
-                LockProgress(position: position, duration: track.duration)
-                    .frame(width: artSize)
-            }
+                .overlay(
+                    RoundedRectangle(cornerRadius: artSize * 0.07, style: .continuous)
+                        .strokeBorder(.white.opacity(0.15), lineWidth: 1)
+                )
+                .shadow(color: .black.opacity(0.5), radius: 36, y: 18)
+                .scaleEffect(nowPlaying.isPlaying ? 1 : 0.92)
+                .animation(.spring(response: 0.5, dampingFraction: 0.75), value: nowPlaying.isPlaying)
 
             VStack(spacing: 10) {
                 if let index, lines.indices.contains(index) {
@@ -297,35 +290,59 @@ struct LockClock: View {
     }
 }
 
-struct LockProgress: View {
-    let position: Double
-    let duration: Double
+/// The glass player that sits above the password field. It lives in its own
+/// small window so it can take clicks while the rest of the lock screen can't.
+struct LockPlayerCard: View {
+    static let size = CGSize(width: 380, height: 150)
 
-    var body: some View {
-        let fraction = duration > 0 ? min(position / duration, 1) : 0
-        GeometryReader { geometry in
-            ZStack(alignment: .leading) {
-                Capsule().fill(.white.opacity(0.2))
-                Capsule().fill(.white.opacity(0.85)).frame(width: geometry.size.width * fraction)
-            }
-        }
-        .frame(height: 4)
-    }
-}
-
-struct LockControls: View {
     @ObservedObject var nowPlaying: NowPlaying
 
     var body: some View {
-        HStack(spacing: 30) {
-            TransportButton(symbol: "backward.fill", size: 16) { nowPlaying.previousTrack() }
-            TransportButton(symbol: nowPlaying.isPlaying ? "pause.fill" : "play.fill", size: 22) { nowPlaying.togglePlayPause() }
-            TransportButton(symbol: "forward.fill", size: 16) { nowPlaying.nextTrack() }
+        let accent = Color(nsColor: nowPlaying.accent)
+        VStack(spacing: 10) {
+            if let track = nowPlaying.track {
+                HStack(spacing: 12) {
+                    ArtworkView(image: nowPlaying.artwork, cornerRadius: 8)
+                        .frame(width: 40, height: 40)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(track.title)
+                            .font(.system(size: 13, weight: .semibold))
+                        Text(track.artist)
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(.white.opacity(0.6))
+                    }
+                    .lineLimit(1)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    TimelineView(.animation(minimumInterval: 1 / 30, paused: !nowPlaying.isPlaying)) { context in
+                        Waveform(time: context.date.timeIntervalSinceReferenceDate, color: accent, maxHeight: nowPlaying.isPlaying ? 16 : 4)
+                    }
+                    .frame(width: 22)
+                }
+
+                Scrubber(nowPlaying: nowPlaying, duration: track.duration)
+
+                HStack(spacing: 40) {
+                    TransportButton(symbol: "backward.fill", size: 16) { nowPlaying.previousTrack() }
+                    TransportButton(symbol: nowPlaying.isPlaying ? "pause.fill" : "play.fill", size: 24) { nowPlaying.togglePlayPause() }
+                    TransportButton(symbol: "forward.fill", size: 16) { nowPlaying.nextTrack() }
+                }
+            }
         }
-        .padding(.horizontal, 22)
+        .foregroundStyle(.white)
+        .padding(.horizontal, 18)
+        .padding(.vertical, 14)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(BehindWindowBlur().clipShape(Capsule()))
-        .overlay(Capsule().strokeBorder(.white.opacity(0.18), lineWidth: 1))
+        .background {
+            ZStack {
+                BehindWindowBlur()
+                LinearGradient(colors: [accent.opacity(0.22), .black.opacity(0.25)], startPoint: .topLeading, endPoint: .bottomTrailing)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
+        }
+        .overlay(
+            RoundedRectangle(cornerRadius: 26, style: .continuous)
+                .strokeBorder(LinearGradient(colors: [.white.opacity(0.35), .white.opacity(0.08)], startPoint: .top, endPoint: .bottom), lineWidth: 1)
+        )
         .environment(\.colorScheme, .dark)
     }
 }
