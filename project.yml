@@ -25,6 +25,7 @@ targets:
         CFBundleDisplayName: Flint
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         CFBundleShortVersionString: $(MARKETING_VERSION)
+        NSAudioCaptureUsageDescription: Flint routes each app's sound to the speakers and volume you pick in the notch.
         NSLocationUsageDescription: Flint uses your rough location to show the local weather in the notch and on the lock screen.
         NSAppleEventsUsageDescription: Flint reads the current song from Music and Spotify so it can show it in the notch and control playback.
     entitlements:

@@ -3,12 +3,12 @@ import SwiftUI
 @MainActor
 final class IslandModel: ObservableObject {
     enum Tab: Hashable {
-        case media, shelf, recording
+        case media, shelf, sound, devices, recording
     }
 
     static let compactWing: CGFloat = 38
     static let recordingWing: CGFloat = 66
-    static let expandedWidth: CGFloat = 460
+    static let expandedWidth: CGFloat = 520
     static let expandedContentHeight: CGFloat = 124
 
     @Published var notchSize = CGSize(width: 0, height: 24)
@@ -26,6 +26,8 @@ final class IslandModel: ObservableObject {
     let lyrics: Lyrics
     let devices: DeviceWatcher
     let weather: Weather
+    let batteries = Devices()
+    let audio = AudioRouter()
 
     init(nowPlaying: NowPlaying, ember: EmberLink, shelf: Shelf, lyrics: Lyrics, devices: DeviceWatcher, weather: Weather) {
         self.nowPlaying = nowPlaying
@@ -69,8 +71,8 @@ final class IslandModel: ObservableObject {
     }
 
     var tabs: [Tab] {
-        if showsRecording { return [.recording, .media, .shelf] }
-        return ember.isRunning ? [.media, .shelf, .recording] : [.media, .shelf]
+        if showsRecording { return [.recording, .media, .shelf, .sound, .devices] }
+        return ember.isRunning ? [.media, .shelf, .sound, .devices, .recording] : [.media, .shelf, .sound, .devices]
     }
 
     var topRadius: CGFloat {
