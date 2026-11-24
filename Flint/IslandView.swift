@@ -89,6 +89,8 @@ struct IslandView: View {
                         MediaPlayerView(nowPlaying: nowPlaying, lyrics: model.lyrics)
                     case .devices:
                         DevicesView(devices: model.batteries)
+                    case .sound:
+                        SoundView(router: model.audio)
                     case .shelf:
                         ShelfView(shelf: shelf, isTargeted: model.isDropTargeted)
                     }
@@ -145,7 +147,7 @@ struct IslandHeader: View {
     @ObservedObject var weather: Weather
 
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: 2) {
             ForEach(model.tabs, id: \.self) { tab in
                 Button {
                     model.tab = tab
@@ -153,7 +155,7 @@ struct IslandHeader: View {
                     Image(systemName: symbol(for: tab))
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(model.tab == tab ? .white : .white.opacity(0.45))
-                        .frame(width: 28, height: 22)
+                        .frame(width: 26, height: 22)
                         .background(.white.opacity(model.tab == tab ? 0.16 : 0), in: Capsule())
                         .contentShape(Capsule())
                 }
@@ -194,6 +196,7 @@ struct IslandHeader: View {
         case .media: "music.note"
         case .shelf: "tray.full"
         case .devices: "battery.75percent"
+        case .sound: "speaker.wave.2"
         case .recording: "record.circle"
         }
     }
@@ -203,6 +206,7 @@ struct IslandHeader: View {
         case .media: "Now Playing"
         case .shelf: "Shelf"
         case .devices: "Devices"
+        case .sound: "Sound"
         case .recording: "Ember"
         }
     }
