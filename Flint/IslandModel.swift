@@ -3,7 +3,7 @@ import SwiftUI
 @MainActor
 final class IslandModel: ObservableObject {
     enum Tab: Hashable {
-        case media, shelf, recording
+        case media, shelf, devices, recording
     }
 
     static let compactWing: CGFloat = 38
@@ -26,6 +26,7 @@ final class IslandModel: ObservableObject {
     let lyrics: Lyrics
     let devices: DeviceWatcher
     let weather: Weather
+    let batteries = Devices()
 
     init(nowPlaying: NowPlaying, ember: EmberLink, shelf: Shelf, lyrics: Lyrics, devices: DeviceWatcher, weather: Weather) {
         self.nowPlaying = nowPlaying
@@ -69,8 +70,8 @@ final class IslandModel: ObservableObject {
     }
 
     var tabs: [Tab] {
-        if showsRecording { return [.recording, .media, .shelf] }
-        return ember.isRunning ? [.media, .shelf, .recording] : [.media, .shelf]
+        if showsRecording { return [.recording, .media, .shelf, .devices] }
+        return ember.isRunning ? [.media, .shelf, .devices, .recording] : [.media, .shelf, .devices]
     }
 
     var topRadius: CGFloat {

@@ -87,6 +87,8 @@ struct IslandView: View {
                         RecordingPanelView(ember: ember)
                     case .media:
                         MediaPlayerView(nowPlaying: nowPlaying, lyrics: model.lyrics)
+                    case .devices:
+                        DevicesView(devices: model.batteries)
                     case .shelf:
                         ShelfView(shelf: shelf, isTargeted: model.isDropTargeted)
                     }
@@ -191,6 +193,7 @@ struct IslandHeader: View {
         switch tab {
         case .media: "music.note"
         case .shelf: "tray.full"
+        case .devices: "battery.75percent"
         case .recording: "record.circle"
         }
     }
@@ -199,6 +202,7 @@ struct IslandHeader: View {
         switch tab {
         case .media: "Now Playing"
         case .shelf: "Shelf"
+        case .devices: "Devices"
         case .recording: "Ember"
         }
     }
