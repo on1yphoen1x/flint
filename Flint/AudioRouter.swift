@@ -225,9 +225,9 @@ final class ProcessRoute {
         self.processes = processes
         self.deviceUID = deviceUID
 
-        let description = CATapDescription(stereoMixdownOfProcesses: processes.map { NSNumber(value: $0) })
+        let description = CATapDescription(stereoMixdownOfProcesses: processes)
         description.uuid = UUID()
-        description.muteBehavior = .mutedWhenTapped
+        description.muteBehavior = CATapMuteBehavior.mutedWhenTapped
         description.isPrivate = true
         description.name = "Flint \(name)"
         guard AudioHardwareCreateProcessTap(description, &tap) == noErr else { throw Failure() }

@@ -71,7 +71,6 @@ private struct SoundRow: View {
                 in: 0...1
             )
             .controlSize(.mini)
-            .tint(.ink)
 
             Menu {
                 Button {
