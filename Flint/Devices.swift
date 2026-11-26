@@ -119,8 +119,10 @@ struct DevicesView: View {
                         ForEach(devices.list) { DeviceGauge(device: $0) }
                     }
                     .padding(.horizontal, 4)
-                    .frame(minWidth: 400)
+                    .padding(.vertical, 6)
+                    .frame(minWidth: 400, maxHeight: .infinity)
                 }
+                .scrollBounceBehavior(.basedOnSize)
             }
         }
         .task {
@@ -144,8 +146,9 @@ private struct DeviceGauge: View {
     var body: some View {
         VStack(spacing: 6) {
             ZStack {
-                Circle().stroke(.ink.opacity(0.14), lineWidth: 4)
+                Circle().inset(by: 2).stroke(.ink.opacity(0.14), lineWidth: 4)
                 Circle()
+                    .inset(by: 2)
                     .trim(from: 0, to: CGFloat(device.percent) / 100)
                     .stroke(tint, style: StrokeStyle(lineWidth: 4, lineCap: .round))
                     .rotationEffect(.degrees(-90))
