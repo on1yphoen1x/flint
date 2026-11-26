@@ -19,31 +19,32 @@ struct IslandView: View {
         let isVisible = model.isExpanded || model.showsCompact
         let shape = IslandShape(topRadius: model.topRadius, bottomRadius: model.bottomRadius)
 
+        let showsGlass = style != .solid && model.isExpanded
+
         ZStack(alignment: .top) {
-            Group {
-                if style != .solid && model.isExpanded {
+            // Black stays underneath so glass can fade out into the solid closed island.
+            ZStack {
+                Color.black
+                if style != .solid {
                     GlassFill(headerHeight: model.headerHeight, isLight: style == .light)
-                } else {
-                    Color.black
+                        .opacity(showsGlass ? 1 : 0)
                 }
             }
             .frame(width: size.width, height: size.height)
             .opacity(isVisible ? 1 : 0)
 
             content
-                .frame(width: max(size.width - model.topRadius * 2, 0), height: size.height, alignment: .top)
+                .frame(width: size.width, height: size.height, alignment: .top)
         }
         // Everything is clipped to the island itself, so content shrinks away with it
         // instead of lingering outside while it fades.
         .frame(width: size.width, height: size.height, alignment: .top)
         .mask(shape)
-        .overlay {
-            if style != .solid && model.isExpanded {
-                shape
-                    .stroke(LinearGradient(colors: [.clear, .white.opacity(0.22)], startPoint: .top, endPoint: .bottom), lineWidth: 1)
-                    .frame(width: size.width, height: size.height)
-                    .frame(maxHeight: .infinity, alignment: .top)
-            }
+        .overlay(alignment: .top) {
+            shape
+                .stroke(LinearGradient(colors: [.clear, .white.opacity(0.22)], startPoint: .top, endPoint: .bottom), lineWidth: 1)
+                .frame(width: size.width, height: size.height)
+                .opacity(showsGlass ? 1 : 0)
         }
         .shadow(color: .black.opacity(model.isExpanded ? 0.45 : 0), radius: 14, y: 6)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -65,8 +66,21 @@ struct IslandView: View {
         .animation(.spring(response: 0.3, dampingFraction: 0.85), value: model.tab)
     }
 
+    /// The open island's content fades out quickly as it starts to fold, then
+    /// fades back in once the island has mostly opened, so it is never seen squashed.
+    private var unfold: AnyTransition {
+        .asymmetric(
+            insertion: .opacity.combined(with: .scale(scale: 0.96, anchor: .top))
+                .animation(.easeOut(duration: 0.22).delay(0.08)),
+            removal: .opacity.animation(.easeIn(duration: 0.1))
+        )
+    }
+
     private var shrink: AnyTransition {
-        .scale(scale: 0.4, anchor: .top).combined(with: .opacity)
+        .asymmetric(
+            insertion: .opacity.combined(with: .scale(scale: 0.8)).animation(.easeOut(duration: 0.2).delay(0.1)),
+            removal: .opacity.animation(.easeIn(duration: 0.1))
+        )
     }
 
     @ViewBuilder
@@ -76,7 +90,8 @@ struct IslandView: View {
                 .padding(.top, model.headerHeight)
                 .padding(.horizontal, 18)
                 .padding(.bottom, 14)
-                .transition(shrink)
+                .frame(width: model.expandedContentSize.width, height: model.expandedContentSize.height, alignment: .top)
+                .transition(unfold)
         } else if model.isExpanded {
             VStack(spacing: 0) {
                 IslandHeader(model: model, shelf: shelf, weather: weather)
@@ -110,28 +125,34 @@ struct IslandView: View {
                 model.isDropTargeted = targeted
                 if targeted { model.tab = .shelf }
             }
-            .transition(shrink)
+            .frame(width: model.expandedContentSize.width, height: model.expandedContentSize.height, alignment: .top)
+            .transition(unfold)
         } else if let alert = model.alert {
             CompactAlertView(alert: alert, gap: model.gap, height: model.notchSize.height)
+                .frame(width: model.compactContentSize.width)
                 .id(alert.id)
                 .transition(shrink)
         } else if model.showsRecording {
             CompactRecordingView(ember: ember, gap: model.gap, height: model.notchSize.height)
+                .frame(width: model.compactContentSize.width)
                 .transition(shrink)
                 .onTapGesture {
                     withAnimation(spring) { model.setExpanded(true) }
                 }
         } else if model.showsClipSaved {
             CompactClipSavedView(gap: model.gap, height: model.notchSize.height)
+                .frame(width: model.compactContentSize.width)
                 .transition(shrink)
         } else if model.showsClipping {
             CompactClippingView(ember: ember, gap: model.gap, height: model.notchSize.height)
+                .frame(width: model.compactContentSize.width)
                 .transition(shrink)
                 .onTapGesture {
                     withAnimation(spring) { model.setExpanded(true, for: .recording) }
                 }
         } else if model.showsCompact {
             CompactMediaView(nowPlaying: nowPlaying, gap: model.gap, height: model.notchSize.height)
+                .frame(width: model.compactContentSize.width)
                 .transition(shrink)
                 .onTapGesture {
                     withAnimation(spring) { model.setExpanded(true) }

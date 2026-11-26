@@ -93,14 +93,25 @@ final class IslandModel: ObservableObject {
         hasNotch ? notchSize.height : 30
     }
 
+    /// The open island's inner size, fixed whatever the island is doing, so its
+    /// content never gets squeezed while the island folds away around it.
+    var expandedContentSize: CGSize {
+        CGSize(width: max(Self.expandedWidth, notchSize.width + 220), height: headerHeight + Self.expandedContentHeight + 14)
+    }
+
+    var compactContentSize: CGSize {
+        let wing = alert != nil || showsRecording || showsClipSaved || showsClipping ? Self.recordingWing : Self.compactWing
+        return CGSize(width: gap + wing * 2, height: notchSize.height)
+    }
+
     var size: CGSize {
         if isExpanded {
-            let width = max(Self.expandedWidth, notchSize.width + 220)
-            return CGSize(width: width + topRadius * 2, height: headerHeight + Self.expandedContentHeight + 14)
+            let inner = expandedContentSize
+            return CGSize(width: inner.width + topRadius * 2, height: inner.height)
         }
         if showsCompact {
-            let wing = alert != nil || showsRecording || showsClipSaved || showsClipping ? Self.recordingWing : Self.compactWing
-            return CGSize(width: gap + wing * 2 + topRadius * 2, height: notchSize.height)
+            let inner = compactContentSize
+            return CGSize(width: inner.width + topRadius * 2, height: inner.height)
         }
         return hasNotch ? CGSize(width: notchSize.width + topRadius * 2, height: notchSize.height) : .zero
     }
