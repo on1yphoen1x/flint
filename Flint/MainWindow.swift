@@ -58,7 +58,8 @@ struct MainWindow: View {
     let weather: Weather
 
     @Environment(\.openWindow) private var openWindow
-    @State private var page: Page? = .lyrics
+    @AppStorage(SettingsKey.lyricsEnabled) private var lyricsEnabled = true
+    @State private var page: Page?
     @State private var columns = NavigationSplitViewVisibility.all
     @State private var isFullScreen = false
 
@@ -66,7 +67,7 @@ struct MainWindow: View {
         NavigationSplitView(columnVisibility: $columns) {
             List(selection: $page) {
                 Section {
-                    ForEach(Page.library) { SidebarRow(page: $0).tag($0) }
+                    ForEach(library) { SidebarRow(page: $0).tag($0) }
                 }
                 Section("Settings") {
                     ForEach(Page.settings) { SidebarRow(page: $0).tag($0) }
@@ -74,7 +75,7 @@ struct MainWindow: View {
             }
             .navigationSplitViewColumnWidth(min: 170, ideal: 190)
         } detail: {
-            switch page ?? .lyrics {
+            switch page ?? library[0] {
             case .lyrics:
                 LyricsView(lyrics: lyrics, nowPlaying: nowPlaying, isFullScreen: isFullScreen)
                     .toolbar {
@@ -105,7 +106,11 @@ struct MainWindow: View {
             }
         }
         .frame(minWidth: 680, minHeight: 460)
+        .onChange(of: lyricsEnabled) { _, enabled in
+            if !enabled && page == .lyrics { page = .shelf }
+        }
         .onAppear {
+            if page == nil { page = library[0] }
             NSApp.setActivationPolicy(.regular)
             MainWindowOpener.action = { openWindow(id: "main") }
         }
@@ -119,6 +124,10 @@ struct MainWindow: View {
                 columns = .detailOnly
             }
         }
+    }
+
+    private var library: [Page] {
+        lyricsEnabled ? Page.library : Page.library.filter { $0 != .lyrics }
     }
 
     private func toggleFullScreen() {

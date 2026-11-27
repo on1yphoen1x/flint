@@ -25,6 +25,7 @@ final class Lyrics: ObservableObject {
     private let nowPlaying: NowPlaying
     private var cache: [String: Content] = [:]
     private var subscription: AnyCancellable?
+    private var settingObserver: AnyCancellable?
     private var request: Task<Void, Never>?
 
     init(nowPlaying: NowPlaying) {
@@ -34,6 +35,21 @@ final class Lyrics: ObservableObject {
             .sink { [weak self] track in
                 MainActor.assumeIsolated { self?.load(for: track) }
             }
+        settingObserver = NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)
+            .map { _ in Self.isEnabled }
+            .removeDuplicates()
+            .dropFirst()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                MainActor.assumeIsolated {
+                    guard let self else { return }
+                    self.load(for: self.nowPlaying.track)
+                }
+            }
+    }
+
+    nonisolated static var isEnabled: Bool {
+        UserDefaults.standard.bool(forKey: SettingsKey.lyricsEnabled, default: true)
     }
 
     var lines: [Line] {
@@ -69,7 +85,7 @@ final class Lyrics: ObservableObject {
 
     private func load(for track: Track?) {
         request?.cancel()
-        guard let track else {
+        guard let track, Self.isEnabled else {
             content = .none
             return
         }
