@@ -37,12 +37,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     lazy var lockScreen = LockScreenLyrics(lyrics: lyrics, nowPlaying: nowPlaying, weather: weather)
     private var island: IslandController?
     private var corners: ScreenCorners?
+    private var miniPlayer: MiniPlayer?
     private var windowObserver: NSObjectProtocol?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         let model = IslandModel(nowPlaying: nowPlaying, ember: ember, shelf: shelf, lyrics: lyrics, devices: devices, weather: weather)
         island = IslandController(model: model)
         corners = ScreenCorners()
+        miniPlayer = MiniPlayer(nowPlaying: nowPlaying)
         _ = lockScreen
 
         if !UserDefaults.standard.bool(forKey: SettingsKey.hasWelcomed) {

@@ -7,6 +7,7 @@ struct MenuPanel: View {
     @ObservedObject var updater: Updater
 
     @AppStorage(SettingsKey.lockScreen) private var lockScreen = false
+    @AppStorage(SettingsKey.showsMiniPlayer) private var showsMiniPlayer = true
     @AppStorage(SettingsKey.islandStyle) private var style = IslandStyle.solid
     @State private var launchesAtLogin = SMAppService.mainApp.status == .enabled
     @State private var updateMessage: String?
@@ -22,6 +23,7 @@ struct MenuPanel: View {
 
             HStack(spacing: 8) {
                 QuickToggle(title: "Lock Screen", symbol: "lock.rectangle", isOn: $lockScreen)
+                QuickToggle(title: "Mini Player", symbol: "pip", isOn: $showsMiniPlayer)
                 QuickToggle(title: "Glass", symbol: "drop", isOn: Binding(
                     get: { style == .glass },
                     set: { style = $0 ? .glass : .solid }

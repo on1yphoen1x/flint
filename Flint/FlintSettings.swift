@@ -16,6 +16,7 @@ enum SettingsKey {
     static let showsAlerts = "showsAlerts"
     static let showsIslandLyrics = "showsIslandLyrics"
     static let lyricsEnabled = "lyricsEnabled"
+    static let showsMiniPlayer = "showsMiniPlayer"
 }
 
 enum SourcePreference: String, CaseIterable, Identifiable {
