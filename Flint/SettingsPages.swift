@@ -61,12 +61,26 @@ struct MediaSettings: View {
     @AppStorage(SettingsKey.mediaSource) private var source = SourcePreference.automatic
     @AppStorage(SettingsKey.showsMedia) private var showsMedia = true
     @AppStorage(SettingsKey.showsIslandLyrics) private var showsIslandLyrics = true
+    @AppStorage(SettingsKey.lyricsEnabled) private var lyricsEnabled = true
+    @AppStorage(SettingsKey.showsMiniPlayer) private var showsMiniPlayer = true
 
     var body: some View {
         Form {
             Section {
                 Toggle("Show music in the notch", isOn: $showsMedia)
+                Toggle("Show the mini player", isOn: $showsMiniPlayer)
+            } footer: {
+                Text("The mini player floats above your windows while music plays. Drag it wherever you like.")
+                    .foregroundStyle(.secondary)
+            }
+
+            Section {
+                Toggle("Show lyrics", isOn: $lyricsEnabled)
                 Toggle("Show the current lyric line in the notch", isOn: $showsIslandLyrics)
+                    .disabled(!lyricsEnabled)
+            } footer: {
+                Text("Turning lyrics off hides them everywhere: the notch, the window and the lock screen. Flint stops looking them up.")
+                    .foregroundStyle(.secondary)
             }
 
             Section {
